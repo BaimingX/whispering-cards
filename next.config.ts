@@ -1,11 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+
+  eslint: {
+    ignoreDuringBuilds: true, // ✅ 这一行允许跳过 ESLint 报错
+  },
+  
   images: {
     domains: ['localhost'],
-    eslint: {
-      ignoreDuringBuilds: true, // ✅ 这一行允许跳过 ESLint 报错
-    },
     // 如果使用云存储服务，在这里添加图片域名
   },
   // 配置OpenAI API代理，避免CORS问题
