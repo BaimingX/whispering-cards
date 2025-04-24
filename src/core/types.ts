@@ -70,14 +70,7 @@ export interface old_god {
   created_at: Date;
 }
 
-// 占卜响应类型
-export interface OracleResponse {
-  roll: number;
-  content: {
-    omen: string;
-    advice: string;
-  };
-}
+
 
 // 掷骰结果
 export interface RollResult {

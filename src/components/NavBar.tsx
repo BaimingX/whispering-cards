@@ -42,7 +42,7 @@ export default function NavBar() {
   const navItems = [
     { name: "首页", path: "/" },
     { name: "每日抽卡", path: "/daily" },
-    { name: "神谕", path: "/oracle" },
+    
     { name: "场景", path: "/scenario" },
     { 
       name: "创作者", 

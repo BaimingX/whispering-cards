@@ -46,14 +46,7 @@ export default function DailyDrawPage() {
     drawCard();
   }, []);
   
-  // 跳转到占卜页面，带上卡牌信息
-  const goToOracle = () => {
-    if (card && card.old_god_id) {
-      router.push(`/oracle?godId=${card.old_god_id}`);
-    } else {
-      router.push('/oracle');
-    }
-  };
+
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-4">
@@ -63,14 +56,6 @@ export default function DailyDrawPage() {
         {error ? (
           <div className="bg-red-900/50 border border-red-700 p-4 rounded-lg mb-6 text-center">
             <p>{error}</p>
-            {error === '今天已经抽过卡了' && (
-              <button 
-                onClick={() => router.push('/oracle')}
-                className="mt-4 px-6 py-2 bg-purple-800 hover:bg-purple-700 rounded-lg transition"
-              >
-                前往占卜
-              </button>
-            )}
           </div>
         ) : isDrawing ? (
           <div className="bg-gray-800 rounded-lg p-8 shadow-lg animate-pulse flex justify-center">
@@ -113,7 +98,7 @@ export default function DailyDrawPage() {
         {card && (
           <div className="flex flex-col space-y-3 mt-8">
             <button
-              onClick={goToOracle}
+              
               className="px-6 py-3 bg-purple-800 hover:bg-purple-700 rounded-lg transition"
               disabled={isDrawing}
             >
