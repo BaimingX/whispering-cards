@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma, supabase as supabaseAdmin } from '@/lib/db';
 import { getUser } from '@/lib/auth';
 
+
 // 工具：提取 Supabase 存储路径
 function parseStoragePath(url: string | null) {
   if (!url) return null;

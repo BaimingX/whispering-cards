@@ -377,19 +377,15 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
-      // 当用户首次登录时，account 会包含 providerAccountId
-      if (account && user) {
+    async jwt({ token, user }) {
+      if (user) {
         token.id = user.id;
-        token.provider = account.provider;
-        token.providerAccountId = account.providerAccountId;
       }
       return token;
     },
     async session({ session, token }) {
-      // 当使用JWT策略时，回调接收token而不是user
-      if (session.user && token.sub) {
-        session.user.id = token.sub;
+      if (session.user) {
+        session.user.id = token.id as string;
       }
       return session;
     },

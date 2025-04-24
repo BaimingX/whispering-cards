@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/db';
-import { getUser } from '@/lib/auth';
+import { getUser, authOptions } from '@/lib/auth';
 import { OracleResponse, CardInstance } from '@/core/types';
 import { OpenAI } from 'openai';
-import { authOptions } from '../auth/[...nextauth]/route';
 
 // 初始化OpenAI客户端
 const openai = new OpenAI({
