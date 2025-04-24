@@ -19,27 +19,27 @@ export interface Card {
   lore: string;
   mod: number;
   rarity: Rarity;
-  oldGodId?: string;
-  createdAt: Date;
-  oldGod?: OldGod;
+  old_god_id?: string;
+  created_at: Date;
+  old_god?: old_god;
 }
 
 // 用户拥有的卡牌实例
 export interface CardInstance {
   id: string;
-  userId: string;
-  cardId: string;
+  user_id: string;
+  card_id: string;
   quality: Quality;
-  createdAt: Date;
+  created_at: Date;
   card?: Card;
 }
 
 // 抽卡记录
 export interface CardDraw {
-  userId: string;
+  user_id: string;
   date: string;
-  canDrawAgain: boolean;
-  createdAt: Date;
+  can_draw_again: boolean;
+  created_at: Date;
 }
 
 // 剧本
@@ -48,8 +48,8 @@ export interface Scenario {
   name: string;
   description: string;
   steps: ScenarioStep[];
-  rewardCardId?: string;
-  createdAt: Date;
+  reward_card_id?: string;
+  created_at: Date;
 }
 
 // 剧本步骤
@@ -60,14 +60,14 @@ export interface ScenarioStep {
 }
 
 // 古神类型
-export interface OldGod {
+export interface old_god {
   id: string;
   name: string;
   alias?: string;
   personality: string;
-  stylePrompt: string;
-  imageUrl?: string;
-  createdAt: Date;
+  style_prompt: string;
+  image_url?: string;
+  created_at: Date;
 }
 
 // 占卜响应类型

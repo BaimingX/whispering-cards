@@ -48,8 +48,8 @@ export default function DailyDrawPage() {
   
   // 跳转到占卜页面，带上卡牌信息
   const goToOracle = () => {
-    if (card && card.oldGodId) {
-      router.push(`/oracle?godId=${card.oldGodId}`);
+    if (card && card.old_god_id) {
+      router.push(`/oracle?godId=${card.old_god_id}`);
     } else {
       router.push('/oracle');
     }
@@ -86,14 +86,14 @@ export default function DailyDrawPage() {
                   </div>
                 </div>
                 <div className="card-front bg-gray-800 rounded-lg p-6 shadow-xl">
-                  {card.oldGod && (
+                  {card.old_god && (
                     <div className="mb-2 flex items-center">
                       <div className="bg-purple-900 text-xs px-2 py-1 rounded-full">
-                        {card.oldGod.name}
+                        {card.old_god.name}
                       </div>
-                      {card.oldGod.alias && (
+                      {card.old_god.alias && (
                         <div className="ml-2 text-xs opacity-70">
-                          {card.oldGod.alias}
+                          {card.old_god.alias}
                         </div>
                       )}
                     </div>
@@ -117,7 +117,7 @@ export default function DailyDrawPage() {
               className="px-6 py-3 bg-purple-800 hover:bg-purple-700 rounded-lg transition"
               disabled={isDrawing}
             >
-              前往占卜 {card.oldGod ? `(${card.oldGod.name})` : ''}
+              前往占卜 {card.old_god ? `(${card.old_god.name})` : ''}
             </button>
             
             <button

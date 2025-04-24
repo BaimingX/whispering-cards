@@ -13,12 +13,12 @@ export async function GET(req: NextRequest) {
     // 获取用户拥有的所有卡牌实例
     const cardInstances = await prisma.cardInstance.findMany({
       where: {
-        userId: user.id
+        user_id: user.id
       },
       include: {
         card: {
           include: {
-            oldGod: true // 包含古神信息
+            old_god: true // 包含古神信息
           }
         }
       }

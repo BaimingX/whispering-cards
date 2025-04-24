@@ -165,7 +165,7 @@ export function CustomPrismaAdapter(p: PrismaClient): Adapter {
             ${data.type},
             ${data.provider},
             ${data.providerAccountId},
-            ${data.userId},
+            ${data.user_id},
             ${data.refresh_token},
             ${data.access_token},
             ${data.expires_at},
@@ -185,7 +185,7 @@ export function CustomPrismaAdapter(p: PrismaClient): Adapter {
           provider: data.provider,
           providerAccountId: data.providerAccountId,
           type: data.type,
-          userId: data.userId
+          user_id: data.user_id
         } as AdapterAccount;
       } catch (error) {
         console.error("链接账号错误:", error);
@@ -206,6 +206,13 @@ export function CustomPrismaAdapter(p: PrismaClient): Adapter {
               type: accounts[0].type,
               provider: accounts[0].provider,
               providerAccountId: accounts[0].provider_account_id,
+              refresh_token: accounts[0].refresh_token,
+              access_token: accounts[0].access_token,
+              expires_at: accounts[0].expires_at,
+              token_type: accounts[0].token_type,
+              scope: accounts[0].scope,
+              id_token: accounts[0].id_token,
+              session_state: accounts[0].session_state
             } as AdapterAccount;
           }
         }
@@ -451,14 +458,14 @@ export const authOptions: NextAuthOptions = {
           } else {
             // 用户和账号都不存在，需要先创建用户
             console.log("创建新用户和账号");
-            const userId = user.id || uuidv4();
+            const user_id = user.id || uuidv4();
             
             // 创建用户
             const createdUser = await prisma.$executeRaw`
               INSERT INTO users (
                 id, name, email, email_verified, image, created_at, shared_today
               ) VALUES (
-                ${userId},
+                ${user_id},
                 ${user.name},
                 ${user.email},
                 ${(user as any).emailVerified || null},
@@ -481,7 +488,7 @@ export const authOptions: NextAuthOptions = {
                 ${account.type},
                 ${account.provider},
                 ${account.providerAccountId},
-                ${userId},
+                ${user_id},
                 ${account.refresh_token},
                 ${account.access_token},
                 ${account.expires_at},
@@ -552,25 +559,25 @@ export async function getUser(req: NextRequest) {
     }
     
     // 没有有效的会话或cookie，创建新的匿名用户
-    const userId = uuidv4();
+    const user_id = uuidv4();
     return {
-      id: userId,
+      id: user_id,
       isNew: true
     };
   } catch (error) {
     console.error('获取用户错误:', error);
     // 发生错误时返回匿名用户
-    const userId = uuidv4();
+    const user_id = uuidv4();
     return {
-      id: userId,
+      id: user_id,
       isNew: true
     };
   }
 }
 
 // 设置用户ID cookie
-export function setUserIdCookie(response: NextResponse, userId: string) {
-  const token = jwt.sign({ id: userId }, JWT_SECRET, { expiresIn: '30d' });
+export function setuser_idCookie(response: NextResponse, user_id: string) {
+  const token = jwt.sign({ id: user_id }, JWT_SECRET, { expiresIn: '30d' });
   response.cookies.set({
     name: COOKIE_NAME,
     value: token,

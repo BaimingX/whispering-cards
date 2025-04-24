@@ -45,7 +45,7 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
-model OldGod {
+model old_god {
   id           String   @id @default(uuid())
   name         String
   alias        String?
@@ -97,7 +97,7 @@ model Card {
   effect_links       CardEffectLink[]
   attributes         CardAttribute[]
   instances          CardInstance[]
-  old_god            OldGod?             @relation(fields: [old_god_id], references: [id])
+  old_god            old_god?             @relation(fields: [old_god_id], references: [id])
   origin_scenario    Scenario?           @relation("OriginScenario", fields: [origin_scenario_id], references: [id])
   grants             ScenarioCardGrant[]
   scenarios          Scenario[]          @relation("ScenarioCards")

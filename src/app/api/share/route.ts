@@ -30,18 +30,18 @@ export async function POST(req: NextRequest) {
     // 更新抽卡记录，允许再次抽卡
     await prisma.cardDraw.upsert({
       where: { 
-        userId_date: { 
-          userId: user.id, 
+        user_id_date: { 
+          user_id: user.id, 
           date: today 
         } 
       },
       create: { 
-        userId: user.id, 
+        user_id: user.id, 
         date: today, 
-        canDrawAgain: true 
+        can_draw_again: true 
       },
       update: { 
-        canDrawAgain: true 
+        can_draw_again: true 
       }
     });
     

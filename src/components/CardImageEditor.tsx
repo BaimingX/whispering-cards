@@ -778,6 +778,7 @@ export default function CardImageEditor({
                   onClick={() => exportCardAsImage(true)}
                   className="w-full bg-purple-700 hover:bg-purple-600 text-white rounded p-2 flex items-center justify-center"
                   disabled={processing}
+                  data-export-card
                 >
                   {processing ? "导出中..." : "下载卡片图像"}
                 </button>

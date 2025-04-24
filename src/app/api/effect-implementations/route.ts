@@ -21,7 +21,7 @@ export async function GET(request: Request) {
       // 如果提供了type，则按type过滤
       implementations = await prisma.effectImplementation.findMany({
         where: {
-          type: type,
+          type: type as EffectType,
           is_active: true
         },
         select: {

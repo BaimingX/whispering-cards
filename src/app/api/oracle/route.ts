@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { prisma } from '@/lib/db';
 import { getUser, authOptions } from '@/lib/auth';
-import { OracleResponse, CardInstance } from '@/core/types';
+import { OracleResponse } from '@/core/types';
 import { OpenAI } from 'openai';
 
 // 初始化OpenAI客户端
@@ -22,18 +22,18 @@ export async function POST(req: NextRequest) {
     }
     
     // 解析请求体
-    const { topic, offeredCardIds, oldGodId } = await req.json();
+    const { topic, offeredCardIds, old_god_id } = await req.json();
     
-    if (!topic || !oldGodId) {
+    if (!topic || !old_god_id) {
       return NextResponse.json({ error: '缺少必要参数' }, { status: 400 });
     }
     
     // 获取古神信息
-    const oldGod = await prisma.oldGod.findUnique({
-      where: { id: oldGodId }
+    const old_god = await prisma.oldGod.findUnique({
+      where: { id: old_god_id }
     });
     
-    if (!oldGod) {
+    if (!old_god) {
       return NextResponse.json({ error: '古神不存在' }, { status: 404 });
     }
     
@@ -42,14 +42,14 @@ export async function POST(req: NextRequest) {
     
     // 获取所有祭品卡牌的加成
     let totalMod = 0;
-    let offeredCards: CardInstance[] = [];
+    let offeredCards: any[] = [];
     
     if (offeredCardIds && offeredCardIds.length > 0) {
       // 验证用户拥有这些卡牌
       offeredCards = await prisma.cardInstance.findMany({
         where: {
           id: { in: offeredCardIds },
-          userId: user.id
+          user_id: user.id
         },
         include: { card: true }
       });
@@ -63,9 +63,9 @@ export async function POST(req: NextRequest) {
     
     // 准备提示词
     const systemPrompt = `
-你是古老的神秘存在"${oldGod.name}" (${oldGod.alias || ""})，具有以下特性：${oldGod.personality}。
+你是古老的神秘存在"${old_god.name}" (${old_god.alias || ""})，具有以下特性：${old_god.personality}。
 
-${oldGod.stylePrompt}
+${old_god.style_prompt}
 
 基于用户的问题和掷骰结果，提供一个神秘的预言和简短的建议。
 回答格式为JSON，包含两个字段：
@@ -103,7 +103,7 @@ ${oldGod.stylePrompt}
       await prisma.cardInstance.deleteMany({
         where: {
           id: { in: offeredCardIds },
-          userId: user.id
+          user_id: user.id
         }
       });
     }

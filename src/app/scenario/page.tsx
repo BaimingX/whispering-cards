@@ -24,21 +24,21 @@ export default function ScenarioPage() {
             name: '深夜图书馆',
             description: '你在一座古老的图书馆中发现了一本禁忌的书籍...',
             steps: [], // 实际使用时这里会有数据
-            createdAt: new Date()
+            created_at: new Date()
           },
           {
             id: '2',
             name: '失落的神庙',
             description: '探索被遗忘的神庙，寻找传说中的古代神器...',
             steps: [],
-            createdAt: new Date()
+            created_at: new Date()
           },
           {
             id: '3',
             name: '镜中梦魇',
             description: '当你凝视镜子时，镜中的倒影似乎有了自己的意识...',
             steps: [],
-            createdAt: new Date()
+            created_at: new Date()
           }
         ];
         

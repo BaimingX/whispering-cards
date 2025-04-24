@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
-import { Rarity, Card } from '@/core/types';
+import { Rarity } from '@/core/types';
 import { getUser } from '@/lib/auth';
 
 // 根据稀有度获取卡牌权重
@@ -18,7 +18,7 @@ function getWeightByRarity(rarity: Rarity): number {
 }
 
 // 加权随机选择卡牌
-async function getRandomCard(): Promise<Card> {
+async function getRandomCard(): Promise<any> {
   const cards = await prisma.card.findMany();
   
   if (cards.length === 0) {
@@ -27,7 +27,7 @@ async function getRandomCard(): Promise<Card> {
   
   // 计算权重总和
   let totalWeight = 0;
-  const weightedCards = cards.map((card: Card) => {
+  const weightedCards = cards.map((card: any) => {
     const weight = getWeightByRarity(card.rarity as Rarity);
     totalWeight += weight;
     return { card, weight };
@@ -47,12 +47,12 @@ async function getRandomCard(): Promise<Card> {
 }
 
 // 检查用户今天是否已经抽过卡
-async function hasUserDrawnToday(userId: string): Promise<boolean> {
+async function hasUserDrawnToday(user_id: string): Promise<boolean> {
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD格式
   
   const count = await prisma.cardDraw.count({
     where: {
-      userId: userId,
+      user_id: user_id,
       date: today
     }
   });
@@ -61,14 +61,14 @@ async function hasUserDrawnToday(userId: string): Promise<boolean> {
 }
 
 // 获取用户今天抽到的卡牌
-async function getUserTodayCard(userId: string) {
+async function getUserTodayCard(user_id: string) {
   // 获取用户最近创建的卡牌实例
   const cardInstance = await prisma.cardInstance.findFirst({
     where: {
-      userId: userId
+      user_id: user_id
     },
     orderBy: {
-      createdAt: 'desc'
+      created_at: 'desc'
     },
     include: {
       card: true
@@ -87,14 +87,14 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ message: '未授权' }, { status: 401 });
     }
     
-    const userId = user.id;
+    const user_id = user.id;
     
     // 检查用户今天是否已经抽过卡
-    const hasDrawn = await hasUserDrawnToday(userId);
+    const hasDrawn = await hasUserDrawnToday(user_id);
     
     if (hasDrawn) {
       // 如果已经抽过卡，返回今天抽到的卡牌
-      const todayDraw = await getUserTodayCard(userId);
+      const todayDraw = await getUserTodayCard(user_id);
       return NextResponse.json({ 
         message: '今天已经抽过卡了',
         cardInstance: todayDraw?.cardInstance 
@@ -107,8 +107,8 @@ export async function GET(req: NextRequest) {
         // 创建卡牌实例
         const cardInstance = await prisma.cardInstance.create({
           data: {
-            userId: userId,
-            cardId: card.id,
+            user_id: user_id,
+            card_id: card.id,
             quality: 'COMMON'
           },
           include: {
@@ -119,13 +119,13 @@ export async function GET(req: NextRequest) {
         // 记录抽卡历史
         await prisma.cardDraw.create({
           data: {
-            userId: userId,
+            user_id: user_id,
             date: new Date().toISOString().split('T')[0],
-            canDrawAgain: false
+            can_draw_again: false
           }
         });
         
-        console.log(`用户 ${userId} 抽到了卡牌 ${card.name}`);
+        console.log(`用户 ${user_id} 抽到了卡牌 ${card.name}`);
         
         return NextResponse.json({ 
           message: '抽卡成功',

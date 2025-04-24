@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ScenarioStep } from '@/core/types';
@@ -10,21 +10,22 @@ interface ScenarioDetail {
   name: string;
   description: string;
   steps: ScenarioStep[];
-  rewardCardId?: string;
+  reward_card_id?: string;
 }
 
-export default function ScenarioDetailPage({ params }: { params: { id: string } }) {
+export default function ScenarioDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const router = useRouter();
   const [scenario, setScenario] = useState<ScenarioDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  
+
   // 当前步骤
   const [currentStep, setCurrentStep] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [success, setSuccess] = useState(false);
   const [rewardCard, setRewardCard] = useState<any>(null);
-  
+
   // 获取剧本详情
   useEffect(() => {
     const fetchScenario = async () => {
@@ -55,7 +56,7 @@ export default function ScenarioDetailPage({ params }: { params: { id: string } 
               successOn: 2
             }
           ],
-          rewardCardId: 'reward-123'
+          reward_card_id: 'reward-123'
         };
         
         setScenario(mockScenario);
@@ -69,7 +70,7 @@ export default function ScenarioDetailPage({ params }: { params: { id: string } 
 
     fetchScenario();
   }, [params.id]);
-  
+
   // 处理选择
   const handleChoice = async (choiceIndex: number) => {
     if (!scenario) return;
@@ -83,15 +84,15 @@ export default function ScenarioDetailPage({ params }: { params: { id: string } 
       setSuccess(isCorrect);
       
       // 如果成功，获取奖励卡牌
-      if (isCorrect && scenario.rewardCardId) {
+      if (isCorrect && scenario.reward_card_id) {
         try {
           // 实际项目中应该是API调用
-          // const response = await fetch(`/api/cards/${scenario.rewardCardId}`);
+          // const response = await fetch(`/api/cards/${scenario.reward_card_id}`);
           // const card = await response.json();
           
           // 模拟后端数据
           const mockReward = {
-            id: scenario.rewardCardId,
+            id: scenario.reward_card_id,
             name: '禁忌典籍',
             lore: '记载着被世人遗忘的知识，阅读它可能会使人疯狂，但也能获得惊人的洞察力。',
             mod: 4,
@@ -114,12 +115,12 @@ export default function ScenarioDetailPage({ params }: { params: { id: string } 
       }
     }
   };
-  
+
   // 返回剧本列表
   const goBack = () => {
     router.push('/scenario');
   };
-  
+
   if (isLoading) {
     return (
       <div className="container mx-auto py-8 px-4 flex justify-center items-center h-screen">
@@ -127,7 +128,7 @@ export default function ScenarioDetailPage({ params }: { params: { id: string } 
       </div>
     );
   }
-  
+
   if (error || !scenario) {
     return (
       <div className="container mx-auto py-8 px-4">
@@ -142,7 +143,7 @@ export default function ScenarioDetailPage({ params }: { params: { id: string } 
       </div>
     );
   }
-  
+
   return (
     <div className="container mx-auto py-8 px-4">
       <header className="text-center mb-8">

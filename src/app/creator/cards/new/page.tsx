@@ -141,6 +141,7 @@ export default function NewCardPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [finalCardImage, setFinalCardImage] = useState<File | null>(null); // 新增状态存储完整卡片图像
+  const [autoExporting, setAutoExporting] = useState(false);
 
   // 检查用户登录状态，如果未登录则重定向到首页
   useEffect(() => {
@@ -296,6 +297,18 @@ export default function NewCardPage() {
     } else if (currentTab === 'attributes') {
       setCurrentTab('effects');
     } else if (currentTab === 'effects') {
+      // 确保在进入预览标签前已更新了最终的卡牌图像
+      if (formData.image && !autoExporting) {
+        // 使用CardImageEditor中的exportCardAsImage功能来生成最终图像
+        const cardImageComponent = document.querySelector('[data-card-image-editor]');
+        if (cardImageComponent) {
+          // 自动触发导出功能以确保属性和效果显示在预览中
+          const exportBtn = cardImageComponent.querySelector('button[data-export-card]');
+          if (exportBtn) {
+            (exportBtn as HTMLButtonElement).click();
+          }
+        }
+      }
       setCurrentTab('preview');
     } else if (currentTab === 'preview') {
       // 最终提交表单
@@ -600,30 +613,23 @@ export default function NewCardPage() {
             卡牌图片
           </label>
           {/* 移除上方预览，只保留CardImageEditor组件 */}
-          <CardImageEditor 
+          <CardImageEditor
             onImageChange={handleImageChange}
             initialImage={formData.image}
             initialPosition={formData.imagePosition}
             initialScale={formData.imageScale}
-            cardName={formData.name} 
-            attributes={Object.entries(formData.attributes)
-              .filter(([_, value]) => value > 0)
-              .reduce((acc, [key, value]) => {
-                acc[attributeDisplayNames[key as AttributeKey]] = value;
-                return acc;
-              }, {} as Record<string, number>)
-            }
-            effectType={formData.effectType === EffectType.KEY 
-              ? "关键卡牌" 
-              : (formData.effectType ? effectTypeNames[formData.effectType as EffectType]?.split(' ')[0] : '')}
-            effectImplementation={formData.effectType !== EffectType.KEY && formData.effectImplementation ? 
-              `${effectImplementations[formData.effectType as EffectType]?.find(
+            initialFrameId={formData.selectedFrameId}
+            cardName={formData.name || "未命名卡牌"}
+            attributes={formData.attributes}
+            description={formData.description}
+            effectType={formData.effectType ? (formData.effectType === EffectType.KEY ? "钥匙" : effectTypeNames[formData.effectType as EffectType]) : ''}
+            effectImplementation={formData.effectImplementation && formData.effectType !== EffectType.KEY 
+              ? effectImplementations[formData.effectType as EffectType]?.find(
                 impl => impl.id === formData.effectImplementation
-              )?.description || ''}${formData.effectValue > 0 ? ` (${formData.effectValue})` : ''}`
-              : ''
-            }
-            description={formData.effectDescription}
-            onFinalCardImageChange={handleFinalCardImageChange} // 添加完整卡片图像变更处理函数
+              )?.description || ''
+              : ''}
+            onFinalCardImageChange={handleFinalCardImageChange}
+            data-card-image-editor
           />
         </div>
       </div>
@@ -867,50 +873,52 @@ export default function NewCardPage() {
                       </h3>
                     </div>
                   </div>
+                  
+                  {/* 添加属性和效果区域 - 红框区域 */}
+                  <div className="absolute left-0 right-0 bottom-[3%] top-[67%] z-10 flex justify-center">
+                    <div className="w-[88%] h-full px-4 py-2 flex flex-col">
+                      {/* 属性区域 */}
+                      <div className="mb-1 text-center">
+                        <div className="text-xs space-y-0.5 font-serif text-black">
+                          {Object.entries(formData.attributes)
+                            .filter(([_, value]) => value > 0)
+                            .map(([key, value]) => (
+                              <span key={key} className="inline-block mr-2 font-bold">
+                                {attributeDisplayNames[key as AttributeKey]}: {value}
+                              </span>
+                            ))}
+                        </div>
+                      </div>
+                      
+                      {/* 效果区域 */}
+                      <div className="text-center">
+                        {formData.effectType && (
+                          <div className="text-xs mt-0.5 font-serif text-black">
+                            {formData.effectType && (
+                              <span className="font-bold inline">
+                                {formData.effectType === EffectType.KEY 
+                                  ? "钥匙" 
+                                  : effectTypeNames[formData.effectType as EffectType]}:
+                              </span>
+                            )}
+                            {formData.effectImplementation && formData.effectType !== EffectType.KEY && (
+                              <span className="font-bold inline ml-2">
+                                {effectImplementations[formData.effectType as EffectType]?.find(
+                                  impl => impl.id === formData.effectImplementation
+                                )?.description || ''}
+                                {formData.effectValue > 0 ? ` (${formData.effectValue})` : ''}
+                              </span>
+                            )}
+                            {formData.effectDescription && (
+                              <span className="block mt-1 italic">"{formData.effectDescription}"</span>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
-              
-              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-900/80 to-transparent z-20">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="text-xl font-bold text-purple-300">{formData.name || '未命名卡牌'}</h3>
-                  <span className="text-xs px-2 py-1 bg-purple-900/50 rounded text-purple-300">
-                    {formData.rarity === 'COMMON' && '普通'}
-                    {formData.rarity === 'RARE' && '稀有'}
-                    {formData.rarity === 'MYTHIC' && '神话'}
-                    {formData.rarity === 'LEGENDARY' && '传奇'}
-                  </span>
-                </div>
-                <p className="text-sm text-gray-300 line-clamp-3 mb-2">{formData.description || '无描述'}</p>
-                <div className="flex flex-wrap gap-1 mb-2">
-                  {Object.entries(formData.attributes)
-                    .filter(([key, value]) => value > 0 && key !== AttributeKey.VOID)
-                    .map(([key, value]) => (
-                      <span key={key} className="text-xs px-1 py-0.5 bg-gray-700/70 rounded text-gray-300">
-                        {attributeDisplayNames[key as AttributeKey]} {value}
-                      </span>
-                    ))}
-                </div>
-                
-                {/* 添加效果显示 */}
-                {formData.effectType && (
-                  <div className="text-xs text-gray-300 font-serif">
-                    <p>
-                      <span className="font-bold">
-                        {formData.effectType === EffectType.KEY 
-                          ? "钥匙" 
-                          : effectTypeNames[formData.effectType as EffectType]?.split(' ')[0]}
-                      </span>
-                      {formData.effectType !== EffectType.KEY && formData.effectImplementation && 
-                        <span> - {effectImplementations[formData.effectType as EffectType]?.find(
-                          impl => impl.id === formData.effectImplementation
-                        )?.description || ''}{formData.effectValue > 0 ? ` (${formData.effectValue})` : ''}</span>}
-                    </p>
-                    {formData.effectDescription && (
-                      <p className="italic text-gray-400 mt-1">"{formData.effectDescription}"</p>
-                    )}
-                  </div>
-                )}
-              </div>
             </div>
           )}
         </div>

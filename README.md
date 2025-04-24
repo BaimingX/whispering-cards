@@ -50,7 +50,7 @@ whispering-cards/
 │      └─ useDraw.ts
 ├─ lib/
 │  ├─ db.ts                  # Prisma + Supabase URL / Key
-│  └─ auth.ts                # 匿名 cookie & userId
+│  └─ auth.ts                # 匿名 cookie & user_id
 ├─ prisma/
 │  ├─ schema.prisma
 │  └─ seed.ts

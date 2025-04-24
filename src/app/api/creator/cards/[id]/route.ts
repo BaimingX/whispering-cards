@@ -10,16 +10,24 @@ function parseStoragePath(url: string | null) {
   return m ? { bucket: m[1], path: m[2] } : null;
 }
 
+type RouteParams = Promise<{
+  id: string;
+}>;
+
 // 获取卡牌详情
-export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
-  const user = await getUser(_req);
+export async function GET(
+  request: NextRequest,
+  { params }: { params: RouteParams }
+) {
+  const user = await getUser(request);
   if (!user) {
     return NextResponse.json({ error: '未登录' }, { status: 401 });
   }
 
   try {
+    const { id } = await params;
     const card = await prisma.card.findFirst({
-      where: { id: params.id, creator_id: user.id },
+      where: { id, creator_id: user.id },
       include: { attributes: true },
     });
 
@@ -36,18 +44,19 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
 
 // 删除卡牌
 export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: RouteParams }
 ) {
-  const user = await getUser(_req);
+  const user = await getUser(request);
   if (!user) {
     return NextResponse.json({ error: '未登录' }, { status: 401 });
   }
 
   try {
+    const { id } = await params;
     // 先找卡牌 & 权限
     const card = await prisma.card.findFirst({
-      where: { id: params.id, creator_id: user.id },
+      where: { id, creator_id: user.id },
       select: { id: true, art_url: true, final_card_url: true },
     });
 
@@ -56,12 +65,12 @@ export async function DELETE(
     }
 
     // 1. 删除属性
-    await prisma.cardAttribute.deleteMany({ where: { card_id: params.id } });
+    await prisma.cardAttribute.deleteMany({ where: { card_id: id } });
 
     // TODO：如有其他关联表，同样 deleteMany
 
     // 2. 删除卡牌
-    await prisma.card.delete({ where: { id: params.id } });
+    await prisma.card.delete({ where: { id } });
 
     // 3. 清理存储图片（忽略失败）
     const artPath = parseStoragePath(card.art_url);
