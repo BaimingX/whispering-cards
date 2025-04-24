@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { prisma } from '@/lib/db';
+import { prisma, supabase } from '@/lib/db';
 import { getUser, authOptions } from '@/lib/auth';
 import { OracleResponse } from '@/core/types';
 import { OpenAI } from 'openai';
@@ -29,9 +29,16 @@ export async function POST(req: NextRequest) {
     }
     
     // 获取古神信息
-    const old_god = await prisma.oldGod.findUnique({
-      where: { id: old_god_id }
-    });
+    const { data: old_god, error } = await supabase
+      .from('old_gods')
+      .select('*')
+      .eq('id', old_god_id)
+      .single(); // 🚀 只取一条记录
+
+    if (error) {
+      console.error('获取旧神失败:', error.message);
+      throw new Error('获取旧神失败');
+    }
     
     if (!old_god) {
       return NextResponse.json({ error: '古神不存在' }, { status: 404 });

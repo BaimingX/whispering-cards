@@ -1,10 +1,14 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
+import { supabase } from '@/lib/db';
 
 export async function GET() {
   try {
     // 获取所有古神数据
-    const old_gods = await prisma.oldGod.findMany();
+    const { data: old_gods, error } = await supabase
+      .from('old_gods')
+      .select('*');
+    
+    if (error) throw error;
     
     return NextResponse.json(old_gods);
   } catch (error) {
