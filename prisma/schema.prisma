@@ -1,0 +1,358 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Account {
+  id                  String  @id @default(cuid())
+  user_id             String
+  type                String
+  provider            String
+  provider_account_id String
+  refresh_token       String?
+  access_token        String?
+  expires_at          Int?
+  token_type          String?
+  scope               String?
+  id_token            String?
+  session_state       String?
+  user                User    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([provider, provider_account_id])
+  @@map("accounts")
+}
+
+model Session {
+  id            String   @id @default(cuid())
+  session_token String   @unique
+  user_id       String
+  expires       DateTime
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model OldGod {
+  id           String   @id @default(uuid())
+  name         String
+  alias        String?
+  personality  String
+  style_prompt String
+  image_url    String?
+  created_at   DateTime @default(now())
+  cards        Card[]
+
+  @@map("old_gods")
+}
+
+model User {
+  id             String            @id @default(cuid())
+  name           String?
+  email          String?           @unique
+  email_verified DateTime?
+  image          String?
+  created_at     DateTime          @default(now())
+  last_draw      DateTime?
+  shared_today   Boolean           @default(false)
+  accounts       Account[]
+  card_draws     CardDraw[]
+  card_instances CardInstance[]
+  comments       ScenarioComment[]
+  scenario_runs  ScenarioRun[]
+  sessions       Session[]
+
+  cards_created Card[] @relation("CardCreator")
+
+  @@map("users")
+}
+
+model Card {
+  id                 String              @id @default(uuid())
+  name               String
+  description        String              @default("")
+  instruction        String              @default("")
+  scope              CardScope           @default(GLOBAL)
+  rarity             Rarity              @default(COMMON)
+  carry_out          Boolean             @default(false)
+  art_url            String?
+  final_card_url     String?             // 完整渲染的卡片图像URL
+  origin_scenario_id String?
+  max_durability     Int?
+  old_god_id         String?
+  created_at         DateTime            @default(now())
+  updated_at         DateTime            @default(now()) @updatedAt
+  effect_links       CardEffectLink[]
+  attributes         CardAttribute[]
+  instances          CardInstance[]
+  old_god            OldGod?             @relation(fields: [old_god_id], references: [id])
+  origin_scenario    Scenario?           @relation("OriginScenario", fields: [origin_scenario_id], references: [id])
+  grants             ScenarioCardGrant[]
+  scenarios          Scenario[]          @relation("ScenarioCards")
+  creator_id         String
+  creator            User                @relation("CardCreator", fields: [creator_id], references: [id], onDelete: Cascade)
+
+  @@map("cards")
+}
+
+model CardAttribute {
+  card_id String
+  key     AttributeKey
+  value   Int
+  card    Card         @relation(fields: [card_id], references: [id], onDelete: Cascade)
+
+  @@id([card_id, key])
+  @@map("card_attributes")
+}
+
+model EffectImplementation {
+  id           String     @id @default(uuid())
+  type         EffectType
+  code         String     @unique
+  name         String
+  description  String?
+  param_schema Json
+  is_active    Boolean    @default(true)
+
+  cards CardEffectLink[]
+
+  @@map("effect_implementations")
+}
+
+model CardInstance {
+  id              String       @id @default(uuid())
+  user_id         String
+  card_id         String
+  quality         Quality      @default(COMMON)
+  durability      Int?
+  created_at      DateTime     @default(now())
+  scenario_run_id String?
+  card            Card         @relation(fields: [card_id], references: [id])
+  scenario_run    ScenarioRun? @relation(fields: [scenario_run_id], references: [id])
+  user            User         @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@map("card_instances")
+}
+
+model CardDraw {
+  user_id        String
+  date           String
+  can_draw_again Boolean  @default(false)
+  created_at     DateTime @default(now())
+  user           User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, date])
+  @@map("card_draws")
+}
+
+model Scenario {
+  id                 String            @id @default(uuid())
+  title              String
+  slug               String            @unique
+  author_id          String
+  genres             String[]
+  difficulty         Int
+  recommended_deck   Json?
+  status             ScenarioStatus    @default(DRAFT)
+  current_version_id String?           @unique
+  created_at         DateTime          @default(now())
+  updated_at         DateTime          @updatedAt
+  scenario_cards     Card[]            @relation("OriginScenario")
+  comments           ScenarioComment[]
+  versions           ScenarioVersion[]
+  current_version    ScenarioVersion?  @relation("CurrentVersion", fields: [current_version_id], references: [id])
+  cards              Card[]            @relation("ScenarioCards")
+
+  @@map("scenarios")
+}
+
+model ScenarioVersion {
+  id              String              @id @default(uuid())
+  scenario_id     String
+  version         Float
+  changelog       String?
+  blueprint_json  Json
+  node_count      Int
+  edge_count      Int
+  submitted_at    DateTime            @default(now())
+  published_at    DateTime?
+  reviewer_id     String?
+  review_result   ReviewResult?
+  review_comment  String?
+  card_grants     ScenarioCardGrant[]
+  metrics         ScenarioMetric?
+  reviews         ScenarioReview[]
+  runs            ScenarioRun[]
+  scenario        Scenario            @relation(fields: [scenario_id], references: [id], onDelete: Cascade)
+  parent_scenario Scenario?           @relation("CurrentVersion")
+
+  @@unique([scenario_id, version])
+  @@map("scenario_versions")
+}
+
+model ScenarioCardGrant {
+  id                  String          @id @default(uuid())
+  scenario_version_id String
+  timing              GrantTiming
+  node_id             String?
+  card_id             String
+  qty                 Int             @default(1)
+  exportable          Boolean         @default(false)
+  chance              Float?
+  card                Card            @relation(fields: [card_id], references: [id])
+  scenario_version    ScenarioVersion @relation(fields: [scenario_version_id], references: [id], onDelete: Cascade)
+
+  @@index([scenario_version_id, timing])
+  @@map("scenario_card_grants")
+}
+
+model ScenarioMetric {
+  scenario_version_id String          @id
+  avg_clear_minutes   Float?
+  fail_rate           Float?
+  branch_coverage     Float?
+  inflation_factor    Float?
+  updated_at          DateTime        @updatedAt
+  scenario_version    ScenarioVersion @relation(fields: [scenario_version_id], references: [id], onDelete: Cascade)
+
+  @@map("scenario_metrics")
+}
+
+model ScenarioRun {
+  id                  String          @id @default(uuid())
+  scenario_version_id String
+  user_id             String
+  state_json          Json
+  path_json           Json?
+  dice_log_json       Json?
+  started_at          DateTime        @default(now())
+  finished_at         DateTime?
+  temp_cards          CardInstance[]
+  scenario_version    ScenarioVersion @relation(fields: [scenario_version_id], references: [id])
+  user                User            @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@map("scenario_runs")
+}
+
+model ScenarioReview {
+  id                  String          @id @default(uuid())
+  scenario_version_id String
+  reviewer_id         String
+  result              ReviewResult
+  comment             String?
+  created_at          DateTime        @default(now())
+  scenario_version    ScenarioVersion @relation(fields: [scenario_version_id], references: [id], onDelete: Cascade)
+
+  @@index([scenario_version_id])
+  @@map("scenario_reviews")
+}
+
+model ScenarioComment {
+  id          String   @id @default(uuid())
+  scenario_id String
+  user_id     String
+  rating      Int
+  content     String?
+  created_at  DateTime @default(now())
+  scenario    Scenario @relation(fields: [scenario_id], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([scenario_id])
+  @@map("scenario_comments")
+}
+
+/**
+ * ↓↓↓ 彻底取代旧的 _card_effects_link ↓↓↓
+ */
+model CardEffectLink {
+  card_id           String
+  implementation_id String
+  params            Json // 具体数值放这里
+  target            String? // SELF / NODE_FLAG …
+
+  /**
+   * 关系
+   */
+  card           Card                 @relation(fields: [card_id], references: [id], onDelete: Cascade)
+  implementation EffectImplementation @relation(fields: [implementation_id], references: [id])
+
+  @@id([card_id, implementation_id]) // 一张卡对同一模板只挂一次
+  @@map("card_effect_links")
+}
+
+enum Rarity {
+  COMMON
+  RARE
+  MYTHIC
+  LEGENDARY
+}
+
+enum Quality {
+  COMMON
+  RARE
+  LEGENDARY
+}
+
+enum CardScope {
+  GLOBAL
+  SCENARIO
+}
+
+enum AttributeKey {
+  PHYSICAL
+  MEDICAL
+  ENERGY
+  SURVIVAL
+  INSIGHT
+  SOCIAL
+  WISDOM
+  AGILITY
+  SPIRIT
+  CONSTITUTION
+  VOID
+}
+
+enum EffectType {
+  PASSIVE
+  CONSUME
+  RETURN
+  KEY
+}
+
+enum Currency {
+  DUST
+  FAITH
+  ECHO
+}
+
+enum ScenarioStatus {
+  DRAFT
+  PENDING_REVIEW
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ReviewResult {
+  APPROVED
+  REJECTED
+  FLAGGED
+}
+
+enum GrantTiming {
+  ENTRY
+  NODE
+  CLEAR
+}
